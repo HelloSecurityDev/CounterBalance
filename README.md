@@ -6,51 +6,75 @@ CounterBalance is an AI-driven Intrusion Detection and Endpoint Defense System d
 
 ![CounterBalance Logo](https://github.com/HelloSecurityDev/CounterBalance/blob/main/CounterBalance%20Logo.png)
 
-
 ## Features
 
-- **Anomaly Detection**: Utilizes Isolation Forest, a machine learning algorithm, for anomaly detection in network traffic.
-- **Threat Intelligence**: Fetches threat intelligence information from external APIs to enhance detection capabilities.
-- **Automated Response**: Triggers automated response actions such as blocking malicious IPs, mitigating DDoS attacks, quarantining malware, and preventing the execution of suspicious files.
-- **User Interface**: Provides a graphical user interface (GUI) for easy interaction and monitoring of system activities.
-- **Logging**: Logs all system events to a file for audit and analysis purposes.
-
-## Prerequisites
-
-- Python 3.x
-- Required Python packages (`pip install scapy scikit-learn requests`)
-- Ensure you obtain and add your API key for the external security resources noted in the "config.ini" file. Not adding the API key will affect the external security resource functionality.  
+- **Real-time Intrusion Detection**: CounterBalance continuously monitors network traffic using deep packet inspection and anomaly detection techniques.
+- **Automated Response Actions**: Upon detecting threats, CounterBalance triggers automated response actions such as blocking malicious IP addresses, mitigating DDoS attacks, quarantining malware, and preventing execution of suspicious files.
+- **Live Output Console**: Provides a live output console for monitoring system events and alerts in real-time.
+- **System Status Monitoring**: Displays real-time system metrics including CPU and memory usage.
+- **Log Management**: Logs events to a file for historical analysis and auditing purposes.
+- **User-friendly GUI**: Features a user-friendly graphical interface for easy interaction and control.
 
 ## Usage
 
-Download the CounterBalance .exe executable on dropbox here https://tinyurl.com/34hkk3wk , right click , and open as administrator.
-
-or
-
 1. Clone the repository:
 
-    ```bash
-    git clone https://github.com/HelloSecurityDev/CounterBalance.git
-    ```
+   ```bash
+   git clone https://github.com/yourusername/CounterBalance.git
+   ```
+2. Navigate to the project directory:
 
-2. Navigate to the CounterBalance directory:
+   ```bash
+   cd CounterBalance
+   ```
+3. Install The Required Dependencies:
 
-    ```bash
-    cd CounterBalance
-    ```
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Run the Program:
 
-3. Run the script:
+   ```bash
+   python CounterBalance.py
+   ```
 
-    ```bash
-    python CounterBalance.py
-    ```
+## Requirements
 
-4. Use the GUI to start or stop the IDS & EDR functions, view live output, and open the logs directory.
+Python 3.6+
+Required Python packages are listed below.
 
-## Configuration
+```bash
+requests==2.26.0
+scapy==2.4.5
+matplotlib==3.4.3
+psutil==5.8.0
+```
+   
+## V2 UPDATE
 
-- Modify the `config.ini` file to customize settings such as IP addresses, ports, and API keys.
-- Adjust logging levels and formats in the `logging.basicConfig()` call within the script.
+The Version 2 update that has been pushed provides the following additions, updates, and changes to the CounterBalance program.
+
+GUI Improvements:
+- Utilized tkinter's Label, Text, and Button widgets for the GUI.
+- Defined the GUI layout using pack geometry manager.
+- Added labels for the title, tagline, console, and author.
+- Adjusted the window size to 800x600 pixels.
+
+Intrusion Detection and Endpoint Defense (IDS & EDR):
+- Integrated threading for handling concurrency in starting and stopping IDS & EDR.
+- Incorporated packet sniffing using Scapy for intrusion detection.
+- Implemented Deep Packet Inspection (DPI) callback function for analyzing network packets.
+- Added functions for blocking IP addresses, mitigating DDoS attacks, quarantining malware, and preventing execution of suspicious files.
+- Fetched threat intelligence information from an external API for detected IP addresses.
+- Integrated Windows Firewall commands for IP address blocking and other security measures.
+- Ensured logging of events to both the console and a log file for tracking system activity.
+
+Additional Features:
+- Included functionality for training an Isolation Forest model using the KDD Cup dataset.
+- Added buttons for starting IDS & EDR and opening the logs directory.
+- Provided methods for fetching threat intelligence and opening the logs directory in a web browser.
+
+*There is currently no .exe executable download for V2 as of yet. I am working on producing it as quick as possible but as of now, downloading CounterBalance.exe from dropbox will only provide v1 not v2.*
 
 ## Contributing
 
