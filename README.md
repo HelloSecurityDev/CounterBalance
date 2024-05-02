@@ -50,7 +50,7 @@ Contributions are welcome! Please fork the repository, make changes, and submit 
 
 ## Created by
 
-CounterBalance is created by [Hello Security LLC](https://www.hellosecurityllc.github.io) and Adam Rivers.
+CounterBalance is created by [Hello Security LLC](https://www.hellosecurityllc.github.io) and [Adam Rivers](https://www.abtzpro.github.io).
 
 ## Disclaimer
 
