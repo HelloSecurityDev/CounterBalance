@@ -1,2 +1,2 @@
 # CounterBalance
-Windows IDS and EDR all in one
+AI driven windows IDS and EDR all in one
