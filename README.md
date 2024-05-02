@@ -15,6 +15,7 @@ CounterBalance is an AI-driven Intrusion Detection and Endpoint Defense System d
 
 - Python 3.x
 - Required Python packages (`pip install scapy scikit-learn requests`)
+- Ensure you obtain and add your API key for the external security resources noted in the "config.ini" file. Not adding the API key will affect the external security resource functionality.  
 
 ## Usage
 
