@@ -3,6 +3,10 @@ AI driven windows IDS and EDR all in one
 
 CounterBalance is an AI-driven Intrusion Detection and Endpoint Defense System designed to protect Windows machines from various cyber threats. It combines anomaly detection using machine learning with automated response actions to defend against potential attacks.
 
+
+![CounterBalance Logo](https://github.com/HelloSecurityDev/CounterBalance/blob/main/CounterBalance%20Logo.png)
+
+
 ## Features
 
 - **Anomaly Detection**: Utilizes Isolation Forest, a machine learning algorithm, for anomaly detection in network traffic.
