@@ -54,13 +54,13 @@ psutil==5.8.0
 
 The Version 2 update that has been pushed provides the following additions, updates, and changes to the CounterBalance program.
 
-GUI Improvements:
+*GUI Improvements:*
 - Utilized tkinter's Label, Text, and Button widgets for the GUI.
 - Defined the GUI layout using pack geometry manager.
 - Added labels for the title, tagline, console, and author.
 - Adjusted the window size to 800x600 pixels.
 
-Intrusion Detection and Endpoint Defense (IDS & EDR):
+*Intrusion Detection and Endpoint Defense (IDS & EDR):*
 - Integrated threading for handling concurrency in starting and stopping IDS & EDR.
 - Incorporated packet sniffing using Scapy for intrusion detection.
 - Implemented Deep Packet Inspection (DPI) callback function for analyzing network packets.
@@ -69,7 +69,7 @@ Intrusion Detection and Endpoint Defense (IDS & EDR):
 - Integrated Windows Firewall commands for IP address blocking and other security measures.
 - Ensured logging of events to both the console and a log file for tracking system activity.
 
-Additional Features:
+*Additional Features:*
 - Included functionality for training an Isolation Forest model using the KDD Cup dataset.
 - Added buttons for starting IDS & EDR and opening the logs directory.
 - Provided methods for fetching threat intelligence and opening the logs directory in a web browser.
