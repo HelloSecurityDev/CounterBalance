@@ -44,13 +44,15 @@ Python 3.6+
 Required Python packages are listed below.
 
 ```bash
-requests==2.26.0
-scapy==2.4.5
-matplotlib==3.4.3
-psutil==5.8.0
+- tkinter: Pythons de facto standard GUI (Graphical User Interface) package.
+- scapy: For packet manipulation and sniffing.
+- requests: For making HTTP requests to fetch threat intelligence.
+- psutil: For retrieving system and process information.
+- win32evtlog: Windows Event Log API for retrieving security alerts.
+- pywintypes: Python for Windows extensions.
 ```
    
-## V2 UPDATE
+## V3 UPDATE
 
 The Version 2 update that has been pushed provides the following additions, updates, and changes to the CounterBalance program.
 
@@ -59,6 +61,12 @@ The Version 2 update that has been pushed provides the following additions, upda
 - Defined the GUI layout using pack geometry manager.
 - Added labels for the title, tagline, console, and author.
 - Adjusted the window size to 800x600 pixels.
+- Added 5 live output console windows.
+- incorporated live system metrics output.
+- incorporated live windows security event logs output.
+- incorporated live running task monitoring and querying.
+- Incorporated live network traffic monitoring output.
+- incorporated the ability to end chosen tasks.
 
 *Intrusion Detection and Endpoint Defense (IDS & EDR):*
 - Integrated threading for handling concurrency in starting and stopping IDS & EDR.
@@ -74,7 +82,7 @@ The Version 2 update that has been pushed provides the following additions, upda
 - Added buttons for starting IDS & EDR and opening the logs directory.
 - Provided methods for fetching threat intelligence and opening the logs directory in a web browser.
 
-*There is currently no .exe executable download for V2 as of yet. I am working on producing it as quick as possible but as of now, downloading CounterBalance.exe from dropbox will only provide v1 not v2.*
+*There is currently no .exe executable download for V3 as of yet. I am working on producing it as quick as possible but as of now, downloading CounterBalance.exe from dropbox will only provide v1 not v2.*
 
 ## Contributing
 
