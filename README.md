@@ -54,7 +54,7 @@ Required Python packages are listed below.
    
 ## V3 UPDATE
 
-The Version 2 update that has been pushed provides the following additions, updates, and changes to the CounterBalance program.
+The Version 3 update that has been pushed provides the following additions, updates, and changes to the CounterBalance program.
 
 *GUI Improvements:*
 - Utilized tkinter's Label, Text, and Button widgets for the GUI.
