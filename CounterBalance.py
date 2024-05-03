@@ -1,17 +1,17 @@
 import threading
 import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext
+from tkinter import ttk, scrolledtext
 from scapy.all import sniff
 import requests
 import logging
 import subprocess
 import os
 import re
-import webbrowser
-import ctypes
 import psutil
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from datetime import datetime
+import win32evtlog
+import win32security
+import pywintypes
 
 class CounterBalance:
     def __init__(self):
@@ -24,20 +24,16 @@ class CounterBalance:
         # GUI components
         self.create_gui()
 
-        # Initialize variables
-        self.attacker_ip = "192.168.1.1"
-        self.attacker_port = 4444
-
         # Initialize logging
         self.init_logging()
-
-        # Fetch and train the KDD Cup dataset for Isolation Forest
-        self.train_dataset()
 
         # Start CPU and memory monitoring
         self.monitor_thread = threading.Thread(target=self.monitor_system_metrics)
         self.monitor_thread.daemon = True
         self.monitor_thread.start()
+
+        # Check IDS & EDR status every 3 seconds
+        self.check_edr_status()
 
         # Start the GUI
         self.root.mainloop()
@@ -53,53 +49,9 @@ class CounterBalance:
         self.subtitle_label = tk.Label(title_frame, text="An AI-driven Intrusion Detection and Endpoint Defense System", font=("Helvetica", 14), fg="white", bg="#374785")
         self.subtitle_label.pack()
 
-        # Main content frame
-        main_frame = tk.Frame(self.root, bg="#f0f0f0")
-        main_frame.pack(fill="both", expand=True)
-
-        # Left panel
-        left_panel = tk.Frame(main_frame, bg="#f0f0f0")
-        left_panel.pack(side="left", fill="both", expand=True, padx=10, pady=10)
-
-        self.console_label = tk.Label(left_panel, text="Live Output Console", font=("Helvetica", 12), bg="#f0f0f0")
-        self.console_label.pack(pady=5)
-
-        self.console_text = scrolledtext.ScrolledText(left_panel, height=20, width=60, bg="white", fg="black", font=("Courier", 10))
-        self.console_text.pack(pady=5, padx=5, fill="both", expand=True)
-
-        # Right panel
-        right_panel = tk.Frame(main_frame, bg="#f0f0f0")
-        right_panel.pack(side="right", fill="both", expand=True, padx=10, pady=10)
-
-        self.status_label = tk.Label(right_panel, text="System Status", font=("Helvetica", 12), bg="#f0f0f0")
-        self.status_label.pack(pady=5)
-
-        self.cpu_label = tk.Label(right_panel, text="CPU Usage:", font=("Helvetica", 10), bg="#f0f0f0")
-        self.cpu_label.pack(pady=2)
-
-        self.cpu_usage = tk.Label(right_panel, text="", font=("Helvetica", 10), bg="#f0f0f0")
-        self.cpu_usage.pack(pady=2)
-
-        self.mem_label = tk.Label(right_panel, text="Memory Usage:", font=("Helvetica", 10), bg="#f0f0f0")
-        self.mem_label.pack(pady=2)
-
-        self.mem_usage = tk.Label(right_panel, text="", font=("Helvetica", 10), bg="#f0f0f0")
-        self.mem_usage.pack(pady=2)
-
-        self.graph_label = tk.Label(right_panel, text="Real-Time System Metrics", font=("Helvetica", 12), bg="#f0f0f0")
-        self.graph_label.pack(pady=5)
-
-        # Real-time graphs
-        self.fig, self.ax = plt.subplots(figsize=(6, 3), dpi=100)
-        self.canvas = FigureCanvasTkAgg(self.fig, master=right_panel)
-        self.canvas.get_tk_widget().pack(pady=5, padx=5, fill="both", expand=True)
-
-        # Initialize plots
-        self.init_plots()
-
         # Buttons
         button_frame = tk.Frame(self.root, bg="#f0f0f0")
-        button_frame.pack(fill="x", padx=10, pady=10)
+        button_frame.pack(fill="x")
 
         self.start_stop_button = tk.Button(button_frame, text="Start IDS & EDR", font=("Helvetica", 10), command=self.start_stop_detection)
         self.start_stop_button.pack(side="left", padx=5)
@@ -113,32 +65,57 @@ class CounterBalance:
         self.monitor_processes_button = tk.Button(button_frame, text="Monitor Processes", font=("Helvetica", 10), command=self.monitor_processes)
         self.monitor_processes_button.pack(side="left", padx=5)
 
-    def init_plots(self):
-        self.cpu_data = []
-        self.mem_data = []
-        self.time_data = []
+        self.end_process_button = tk.Button(button_frame, text="End Process", font=("Helvetica", 10), command=self.end_selected_process)
+        self.end_process_button.pack(side="left", padx=5)
 
-        self.ax.set_title('CPU and Memory Usage')
-        self.ax.set_xlabel('Time')
-        self.ax.set_ylabel('Usage (%)')
-        self.ax.set_ylim(0, 100)
-        self.ax.set_xlim(0, 10)
-        self.line_cpu, = self.ax.plot([], [], label='CPU Usage (%)')
-        self.line_mem, = self.ax.plot([], [], label='Memory Usage (%)')
-        self.ax.legend(loc='upper right')
+        # Main content frame
+        main_frame = tk.Frame(self.root, bg="#f0f0f0")
+        main_frame.pack(fill="both", expand=True)
 
-    def update_plots(self, cpu_percent, mem_percent):
-        self.cpu_data.append(cpu_percent)
-        self.mem_data.append(mem_percent)
-        self.time_data.append(len(self.cpu_data))
+        # Divide the GUI into six equal parts
+        part_width = self.root.winfo_screenwidth() // 6
 
-        self.line_cpu.set_data(self.time_data, self.cpu_data)
-        self.line_mem.set_data(self.time_data, self.mem_data)
+        # Left panel
+        left_panel = tk.Frame(main_frame, bg="#f0f0f0", width=part_width)
+        left_panel.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
-        if len(self.cpu_data) > 10:
-            self.ax.set_xlim(self.time_data[-10], self.time_data[-1])
+        self.console1_label = tk.Label(left_panel, text="Live Network Traffic", font=("Helvetica", 12), bg="#f0f0f0")
+        self.console1_label.pack(pady=5)
 
-        self.canvas.draw()
+        self.console1_text = scrolledtext.ScrolledText(left_panel, height=10, width=60, bg="white", fg="black", font=("Courier", 10))
+        self.console1_text.pack(pady=5, padx=5, fill="both", expand=True)
+
+        self.console2_label = tk.Label(left_panel, text="IDS & EDR Information", font=("Helvetica", 12), bg="#f0f0f0")
+        self.console2_label.pack(pady=5)
+
+        self.console2_text = scrolledtext.ScrolledText(left_panel, height=10, width=60, bg="white", fg="black", font=("Courier", 10))
+        self.console2_text.pack(pady=5, padx=5, fill="both", expand=True)
+
+        # Middle panel
+        middle_panel = tk.Frame(main_frame, bg="#f0f0f0", width=part_width)
+        middle_panel.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+
+        self.console3_label = tk.Label(middle_panel, text="Windows Event Log & Security Alerts", font=("Helvetica", 12), bg="#f0f0f0")
+        self.console3_label.pack(pady=5)
+
+        self.console3_text = scrolledtext.ScrolledText(middle_panel, height=10, width=60, bg="white", fg="black", font=("Courier", 10))
+        self.console3_text.pack(pady=5, padx=5, fill="both", expand=True)
+
+        # Right panel
+        right_panel = tk.Frame(main_frame, bg="#f0f0f0", width=part_width)
+        right_panel.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+
+        self.console4_label = tk.Label(right_panel, text="Running Processes", font=("Helvetica", 12), bg="#f0f0f0")
+        self.console4_label.pack(pady=5)
+
+        self.console4_text = scrolledtext.ScrolledText(right_panel, height=10, width=60, bg="white", fg="black", font=("Courier", 10))
+        self.console4_text.pack(pady=5, padx=5, fill="both", expand=True)
+
+        self.console5_label = tk.Label(right_panel, text="System Metrics", font=("Helvetica", 12), bg="#f0f0f0")
+        self.console5_label.pack(pady=5)
+
+        self.console5_text = scrolledtext.ScrolledText(right_panel, height=10, width=60, bg="white", fg="black", font=("Courier", 10))
+        self.console5_text.pack(pady=5, padx=5, fill="both", expand=True)
 
     def init_logging(self):
         # Initialize logging configuration
@@ -157,16 +134,6 @@ class CounterBalance:
         # Add the file handler to the logger
         self.logger.addHandler(file_handler)
 
-    def train_dataset(self):
-        # Fetch and train the KDD Cup dataset for Isolation Forest
-        self.log_event("Fetching and training KDD Cup dataset for Isolation Forest...")
-
-        try:
-            # Your dataset training code here
-            self.log_event("Dataset training completed.")
-        except Exception as e:
-            self.log_event(f"Error fetching and training dataset: {str(e)}")
-
     def start_stop_detection(self):
         # Start or stop intrusion detection and endpoint defense
         if not hasattr(self, 'detect_thread') or not self.detect_thread.is_alive():
@@ -179,6 +146,7 @@ class CounterBalance:
         self.log_event("Starting IDS & EDR...")
         self.update_status("IDS & EDR running")
         self.detect_thread = threading.Thread(target=self.detect_intrusion)
+        self.detect_thread.daemon = True
         self.detect_thread.start()
         self.start_stop_button.config(text="Stop IDS & EDR")
 
@@ -195,8 +163,13 @@ class CounterBalance:
     def detect_intrusion(self):
         self.log_event("Starting intrusion detection...")
 
-        # Sniff network packets and perform anomaly detection
-        sniff(prn=self.dpi_callback, store=False, timeout=10)
+        try:
+            # Continuously sniff network packets and perform anomaly detection
+            sniff(prn=self.dpi_callback, store=False)
+        except Exception as e:
+            self.log_event(f"Error during intrusion detection: {str(e)}")
+        finally:
+            self.log_event("Intrusion detection stopped.")
 
     def dpi_callback(self, packet):
         # Deep Packet Inspection callback function
@@ -211,6 +184,9 @@ class CounterBalance:
 
             # Trigger automated response actions based on detected threats
             self.trigger_response_actions(packet)
+
+            # Update network monitoring
+            self.update_network_monitoring(packet)
 
     def trigger_response_actions(self, packet):
         # Automated response actions based on detected threats
@@ -282,72 +258,146 @@ class CounterBalance:
 
         # Step 2: Distribute permissions
         try:
-            subprocess.run(["icacls", f'"{suspicious_file}"', "/grant", f"{self.get_current_username()}:(OI)(CI)(X)"], check=True)
+            subprocess.run(["icacls", f'"{suspicious_file}"', "/grant", f"{self.get_current_username()}:(F)"], check=True)
         except subprocess.CalledProcessError as e:
             self.log_event(f"Failed to distribute permissions for suspicious file {suspicious_file}: {e}")
             return
 
-        # Step 3: Prevent execution
+        # Step 3: Deny execution
         try:
-            subprocess.run(["icacls", f'"{suspicious_file}"', "/deny", "*S-1-1-0:(OI)(CI)(X)"], check=True)
+            subprocess.run(["icacls", f'"{suspicious_file}"', "/deny", f"{self.get_current_username()}:(X)"], check=True)
         except subprocess.CalledProcessError as e:
-            self.log_event(f"Failed to prevent execution of suspicious file {suspicious_file}: {e}")
+            self.log_event(f"Failed to deny execution of suspicious file {suspicious_file}: {e}")
+            return
 
-    def log_event(self, event):
-        # Log event to the console and to a file
-        self.console_text.insert(tk.END, f"{event}\n")
-        self.logger.info(event)
-
-    def update_status(self, message):
-        self.status_label.config(text=message)
-
-    def open_logs_directory(self):
-        try:
-            log_directory = os.path.abspath("counterbalance.log")
-            if os.path.exists(log_directory):
-                webbrowser.open(os.path.dirname(log_directory))
-            else:
-                messagebox.showinfo("Info", "Log directory not found.")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to open logs directory: {str(e)}")
+        self.log_event("Execution prevention applied to suspicious file.")
 
     def get_current_username(self):
         # Get the current username
-        buf = ctypes.create_unicode_buffer(100)
-        ctypes.windll.kernel32.GetUserNameW(buf, ctypes.byref(ctypes.c_int(100)))
-        return buf.value
+        return os.getlogin()
 
-    # Additional Features
-    def scan_files(self):
-        # Scan files for malware using Windows Defender
-        self.log_event("Scanning files for malware...")
+    def open_logs_directory(self):
+        # Open logs directory in file explorer
+        logs_dir = os.path.dirname(os.path.realpath(__file__))
         try:
-            os.system("Start-MpScan -ScanType QuickScan")
+            subprocess.Popen(f'explorer "{logs_dir}"')
         except Exception as e:
-            self.log_event(f"Error scanning files: {str(e)}")
+            self.log_event(f"Error opening logs directory: {str(e)}")
+
+    def scan_files(self):
+        # Placeholder function to scan files for malware
+        self.log_event("Scanning files for malware...")
 
     def monitor_processes(self):
-        # Monitor running processes for suspicious activity
+        # Monitor running processes and display in the GUI
         self.log_event("Monitoring running processes...")
-        try:
-            for proc in psutil.process_iter(['pid', 'name']):
-                self.log_event(f"Process: {proc.info}")
-                # Your process monitoring code here
-        except Exception as e:
-            self.log_event(f"Error monitoring processes: {str(e)}")
+        process_list = []
+        for proc in psutil.process_iter(['pid', 'name']):
+            process_list.append((proc.info['pid'], proc.info['name']))
+        self.update_processes(process_list)
+
+    def end_selected_process(self):
+        # End the selected process
+        self.log_event("Ending selected process...")
+        selected_process = self.console4_text.get(tk.SEL_FIRST, tk.SEL_LAST)
+        if selected_process:
+            pid = int(selected_process.split()[0])
+            try:
+                process = psutil.Process(pid)
+                process.terminate()
+                self.log_event(f"Process {pid} terminated successfully.")
+            except psutil.NoSuchProcess:
+                self.log_event(f"Process {pid} does not exist.")
+            except psutil.AccessDenied:
+                self.log_event(f"Access denied: Unable to terminate process {pid}.")
+        else:
+            self.log_event("No process selected.")
+
+    def check_edr_status(self):
+        # Check IDS & EDR status every 3 seconds
+        self.log_event("Checking IDS & EDR status...")
+        if hasattr(self, 'detect_thread') and self.detect_thread.is_alive():
+            self.update_status("IDS & EDR running")
+        else:
+            self.update_status("IDS & EDR not running")
+
+        self.root.after(3000, self.check_edr_status)
 
     def monitor_system_metrics(self):
-        # Continuously monitor CPU and memory usage
+        # Continuously monitor system metrics
         while True:
+            # CPU and memory usage
             cpu_percent = psutil.cpu_percent(interval=1)
-            mem_percent = psutil.virtual_memory().percent
-            self.update_system_metrics(cpu_percent, mem_percent)
+            memory_stats = psutil.virtual_memory()
+            memory_percent = memory_stats.percent
+            memory_total = memory_stats.total
+            memory_used = memory_stats.used
+            memory_free = memory_stats.free
 
-    def update_system_metrics(self, cpu_percent, mem_percent):
-        # Update CPU and memory usage in GUI
-        self.cpu_usage.config(text=f"{cpu_percent}%")
-        self.mem_usage.config(text=f"{mem_percent}%")
-        self.update_plots(cpu_percent, mem_percent)
+            # Disk usage
+            disk_partitions = psutil.disk_partitions()
+            disk_stats = {}
+            for partition in disk_partitions:
+                try:
+                    usage = psutil.disk_usage(partition.mountpoint)
+                    disk_stats[partition.device] = {
+                        "total": usage.total,
+                        "used": usage.used,
+                        "free": usage.free,
+                        "percent": usage.percent
+                    }
+                except Exception as e:
+                    disk_stats[partition.device] = {
+                        "error": str(e)
+                    }
+
+            # Network usage
+            network_stats = psutil.net_io_counters()
+            bytes_sent = network_stats.bytes_sent
+            bytes_received = network_stats.bytes_recv
+
+            # Display system metrics in GUI
+            self.update_system_metrics(cpu_percent, memory_percent, memory_total, memory_used, memory_free, disk_stats, bytes_sent, bytes_received)
+
+    def update_status(self, status):
+        # Update IDS & EDR status in GUI
+        self.console2_text.delete('1.0', tk.END)
+        self.console2_text.insert(tk.END, status)
+
+    def update_network_monitoring(self, packet):
+        # Update network monitoring in GUI
+        self.console1_text.insert(tk.END, packet.summary() + "\n")
+
+    def update_processes(self, process_list):
+        # Update running processes in GUI
+        self.console4_text.delete('1.0', tk.END)
+        for pid, name in process_list:
+            self.console4_text.insert(tk.END, f"{pid}\t{name}\n")
+
+    def update_system_metrics(self, cpu_percent, memory_percent, memory_total, memory_used, memory_free, disk_stats, bytes_sent, bytes_received):
+        # Update system metrics in GUI
+        self.console5_text.delete('1.0', tk.END)
+        self.console5_text.insert(tk.END, f"CPU Usage: {cpu_percent}%\n")
+        self.console5_text.insert(tk.END, f"Memory Usage: {memory_percent}%\n")
+        self.console5_text.insert(tk.END, f"Total Memory: {memory_total} bytes\n")
+        self.console5_text.insert(tk.END, f"Used Memory: {memory_used} bytes\n")
+        self.console5_text.insert(tk.END, f"Free Memory: {memory_free} bytes\n\n")
+        self.console5_text.insert(tk.END, "Disk Usage:\n")
+        for device, stats in disk_stats.items():
+            self.console5_text.insert(tk.END, f"Device: {device}\n")
+            if "error" in stats:
+                self.console5_text.insert(tk.END, f"Error: {stats['error']}\n")
+            else:
+                self.console5_text.insert(tk.END, f"Total: {stats['total']} bytes\n")
+                self.console5_text.insert(tk.END, f"Used: {stats['used']} bytes\n")
+                self.console5_text.insert(tk.END, f"Free: {stats['free']} bytes\n")
+                self.console5_text.insert(tk.END, f"Usage: {stats['percent']}%\n\n")
+        self.console5_text.insert(tk.END, f"Network Traffic:\nBytes Sent: {bytes_sent}\nBytes Received: {bytes_received}\n")
+
+    def log_event(self, event):
+        # Log events to console and log file
+        self.logger.info(event)
+        self.console3_text.insert(tk.END, event + "\n")
 
 if __name__ == "__main__":
-    counterbalance = CounterBalance()
+    CounterBalance()
