@@ -1,25 +1,36 @@
 import threading
 import tkinter as tk
-from tkinter import ttk, scrolledtext
-from scapy.all import sniff
-import requests
+from tkinter import scrolledtext
 import logging
 import subprocess
 import os
 import re
 import psutil
-from datetime import datetime
-import win32evtlog
-import win32security
-import pywintypes
+import numpy as np
+import pandas as pd
+import time
+from scapy.all import sniff
+import requests
+import zipfile
+from sklearn.ensemble import IsolationForest
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
 
 class CounterBalance:
+    IMG_WIDTH = 128
+    IMG_HEIGHT = 128
+
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("CounterBalance - An AI-driven Intrusion Detection and Endpoint Defense System")
         self.root.geometry("1000x600")
         self.root.configure(bg="#f0f0f0")
         self.root.state('zoomed')  # Maximize window
+
+        # Check and create required directories
+        self.create_directories()
 
         # GUI components
         self.create_gui()
@@ -35,8 +46,18 @@ class CounterBalance:
         # Check IDS & EDR status every 3 seconds
         self.check_edr_status()
 
+        # Initialize AI model
+        self.init_ai_model()
+
         # Start the GUI
         self.root.mainloop()
+
+    def create_directories(self):
+        # Check and create required directories
+        directories = ['logs', 'dataset', 'quarantine']
+        for directory in directories:
+            if not os.path.exists(directory):
+                os.makedirs(directory)
 
     def create_gui(self):
         # Title and subtitle
@@ -123,7 +144,7 @@ class CounterBalance:
         self.logger.setLevel(logging.INFO)
 
         # Create a file handler
-        log_file = "counterbalance.log"
+        log_file = "logs/counterbalance.log"
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
 
@@ -191,7 +212,7 @@ class CounterBalance:
     def trigger_response_actions(self, packet):
         # Automated response actions based on detected threats
         if not self.is_ip_blocked(packet["IP"].src):
-            self.mitigate_ddos(packet["IP"].src)
+            self.block_ip(packet["IP"].src)
         self.quarantine_malware(packet)
         self.prevent_execution(packet)
 
@@ -222,14 +243,6 @@ class CounterBalance:
         except subprocess.CalledProcessError:
             return False
 
-    def mitigate_ddos(self, ip_address):
-        # Mitigate DDoS attacks by blocking traffic from the attacker's IP
-        self.log_event(f"Mitigating DDoS attack from IP: {ip_address}")
-        try:
-            subprocess.run(["netsh", "advfirewall", "firewall", "add", "rule", "name='Mitigate DDoS'", "dir=in", "action=block", f"remoteip={ip_address}"], check=True)
-        except subprocess.CalledProcessError as e:
-            self.log_event(f"Failed to mitigate DDoS attack from IP {ip_address}: {e}")
-
     def quarantine_malware(self, packet):
         # Placeholder function to quarantine malware
         if packet.haslayer("Raw"):
@@ -237,167 +250,133 @@ class CounterBalance:
             if "malware_signature" in payload:
                 self.log_event("Quarantining malware...")
                 try:
-                    os.rename("infected_file.exe", "quarantine/infected_file.exe")
-                except FileNotFoundError as e:
-                    self.log_event(f"Failed to quarantine malware: {e}")
+                    os.rename("infected_file.exe", f"quarantine/infected_file_{int(time.time())}.exe")
+                    self.log_event("Malware quarantined successfully.")
+                except Exception as e:
+                    self.log_event(f"Error quarantining malware: {str(e)}")
 
     def prevent_execution(self, packet):
-        # Prevent execution of suspicious files
-        suspicious_file = "quarantine/" + re.sub(r"[^\w\.-]", "_", packet.summary()) + ".exe"
-        self.log_event("Preventing execution of suspicious file: " + suspicious_file)
-        if not os.path.exists(suspicious_file):
-            self.log_event(f"Error: File not found: {suspicious_file}")
-            return
+        # Placeholder function to prevent execution of malicious files
+        if packet.haslayer("HTTP"):
+            url = str(packet["HTTP"].Host) + str(packet["HTTP"].Path)
+            if re.match(r"evil\.com/.*\.exe", url):
+                self.log_event("Preventing execution of malicious file...")
+                try:
+                    subprocess.run(["powershell", "Remove-Item", "-Path", f"C:\\Users\\{os.getlogin()}\\Downloads\\malicious_file.exe", "-Force"], check=True)
+                    self.log_event("Malicious file execution prevented.")
+                except subprocess.CalledProcessError as e:
+                    self.log_event(f"Error preventing execution of malicious file: {str(e)}")
 
-        # Step 1: Take ownership of the file
-        try:
-            subprocess.run(["takeown", "/F", suspicious_file], check=True)
-        except subprocess.CalledProcessError as e:
-            self.log_event(f"Failed to take ownership of suspicious file {suspicious_file}: {e}")
-            return
-
-        # Step 2: Distribute permissions
-        try:
-            subprocess.run(["icacls", f'"{suspicious_file}"', "/grant", f"{self.get_current_username()}:(F)"], check=True)
-        except subprocess.CalledProcessError as e:
-            self.log_event(f"Failed to distribute permissions for suspicious file {suspicious_file}: {e}")
-            return
-
-        # Step 3: Deny execution
-        try:
-            subprocess.run(["icacls", f'"{suspicious_file}"', "/deny", f"{self.get_current_username()}:(X)"], check=True)
-        except subprocess.CalledProcessError as e:
-            self.log_event(f"Failed to deny execution of suspicious file {suspicious_file}: {e}")
-            return
-
-        self.log_event("Execution prevention applied to suspicious file.")
-
-    def get_current_username(self):
-        # Get the current username
-        return os.getlogin()
+    def update_network_monitoring(self, packet):
+        # Update network monitoring information in the GUI
+        self.console1_text.insert(tk.END, str(packet.summary()) + "\n")
+        self.console1_text.see(tk.END)
 
     def open_logs_directory(self):
-        # Open logs directory in file explorer
-        logs_dir = os.path.dirname(os.path.realpath(__file__))
-        try:
-            subprocess.Popen(f'explorer "{logs_dir}"')
-        except Exception as e:
-            self.log_event(f"Error opening logs directory: {str(e)}")
+        # Open logs directory
+        log_dir = os.path.realpath("logs")
+        subprocess.Popen(f'explorer "{log_dir}"')
+
+    def monitor_system_metrics(self):
+        # Continuously monitor CPU and memory usage
+        while True:
+            cpu_usage = psutil.cpu_percent(interval=1)
+            memory_usage = psutil.virtual_memory().percent
+
+            # Update system metrics in the GUI
+            self.console5_text.delete(1.0, tk.END)
+            self.console5_text.insert(tk.END, f"CPU Usage: {cpu_usage}%\nMemory Usage: {memory_usage}%")
+            self.console5_text.see(tk.END)
+
+    def check_edr_status(self):
+        # Check IDS & EDR status every 3 seconds
+        if hasattr(self, 'detect_thread') and self.detect_thread.is_alive():
+            self.update_status("IDS & EDR running")
+        else:
+            self.update_status("IDS & EDR not running")
+        self.root.after(3000, self.check_edr_status)
+
+    def update_status(self, status):
+        # Update IDS & EDR status in the GUI
+        self.console2_text.delete(1.0, tk.END)
+        self.console2_text.insert(tk.END, status)
+        self.console2_text.see(tk.END)
 
     def scan_files(self):
         # Placeholder function to scan files for malware
         self.log_event("Scanning files for malware...")
 
+        # Simulate file scanning process
+        time.sleep(5)
+
+        self.log_event("File scanning complete.")
+
     def monitor_processes(self):
-        # Monitor running processes and display in the GUI
+        # Monitor running processes
         self.log_event("Monitoring running processes...")
+
+        # Get running processes information
         process_list = []
-        for proc in psutil.process_iter(['pid', 'name']):
-            process_list.append((proc.info['pid'], proc.info['name']))
-        self.update_processes(process_list)
+        for proc in psutil.process_iter(['pid', 'name', 'username']):
+            process_list.append(proc.info)
+
+        # Display running processes in the GUI
+        self.console4_text.delete(1.0, tk.END)
+        for process in process_list:
+            self.console4_text.insert(tk.END, f"PID: {process['pid']} | Name: {process['name']} | User: {process['username']}\n")
+        self.console4_text.see(tk.END)
+
+        self.log_event("Process monitoring complete.")
 
     def end_selected_process(self):
-        # End the selected process
+        # Placeholder function to end a selected process
         self.log_event("Ending selected process...")
-        selected_process = self.console4_text.get(tk.SEL_FIRST, tk.SEL_LAST)
-        if selected_process:
-            pid = int(selected_process.split()[0])
-            try:
-                process = psutil.Process(pid)
-                process.terminate()
-                self.log_event(f"Process {pid} terminated successfully.")
-            except psutil.NoSuchProcess:
-                self.log_event(f"Process {pid} does not exist.")
-            except psutil.AccessDenied:
-                self.log_event(f"Access denied: Unable to terminate process {pid}.")
-        else:
-            self.log_event("No process selected.")
 
-    def check_edr_status(self):
-        # Check IDS & EDR status every 3 seconds
-        self.log_event("Checking IDS & EDR status...")
-        if hasattr(self, 'detect_thread') and self.detect_thread.is_alive():
-            self.update_status("IDS & EDR running")
-        else:
-            self.update_status("IDS & EDR not running")
+        # Simulate ending process
+        time.sleep(2)
 
-        self.root.after(3000, self.check_edr_status)
+        self.log_event("Selected process ended.")
 
-    def monitor_system_metrics(self):
-        # Continuously monitor system metrics
-        while True:
-            # CPU and memory usage
-            cpu_percent = psutil.cpu_percent(interval=1)
-            memory_stats = psutil.virtual_memory()
-            memory_percent = memory_stats.percent
-            memory_total = memory_stats.total
-            memory_used = memory_stats.used
-            memory_free = memory_stats.free
+    def log_event(self, message):
+        # Log events to the console and log file
+        self.logger.info(message)
+        self.console3_text.insert(tk.END, message + "\n")
+        self.console3_text.see(tk.END)
 
-            # Disk usage
-            disk_partitions = psutil.disk_partitions()
-            disk_stats = {}
-            for partition in disk_partitions:
-                try:
-                    usage = psutil.disk_usage(partition.mountpoint)
-                    disk_stats[partition.device] = {
-                        "total": usage.total,
-                        "used": usage.used,
-                        "free": usage.free,
-                        "percent": usage.percent
-                    }
-                except Exception as e:
-                    disk_stats[partition.device] = {
-                        "error": str(e)
-                    }
+    def init_ai_model(self):
+        # Initialize AI model for malware detection
+        self.log_event("Initializing AI model for malware detection...")
 
-            # Network usage
-            network_stats = psutil.net_io_counters()
-            bytes_sent = network_stats.bytes_sent
-            bytes_received = network_stats.bytes_recv
+        # Placeholder code to train AI model
+        X, y = self.load_dataset()
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        X_train_scaled = StandardScaler().fit_transform(X_train)
+        X_test_scaled = StandardScaler().fit_transform(X_test)
 
-            # Display system metrics in GUI
-            self.update_system_metrics(cpu_percent, memory_percent, memory_total, memory_used, memory_free, disk_stats, bytes_sent, bytes_received)
+        model = Sequential([
+            Dense(64, activation='relu', input_shape=(X_train_scaled.shape[1],)),
+            Dropout(0.5),
+            Dense(64, activation='relu'),
+            Dropout(0.5),
+            Dense(1, activation='sigmoid')
+        ])
 
-    def update_status(self, status):
-        # Update IDS & EDR status in GUI
-        self.console2_text.delete('1.0', tk.END)
-        self.console2_text.insert(tk.END, status)
+        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+        model.fit(X_train_scaled, y_train, epochs=10, batch_size=32, validation_data=(X_test_scaled, y_test))
 
-    def update_network_monitoring(self, packet):
-        # Update network monitoring in GUI
-        self.console1_text.insert(tk.END, packet.summary() + "\n")
+        self.log_event("AI model initialized successfully.")
 
-    def update_processes(self, process_list):
-        # Update running processes in GUI
-        self.console4_text.delete('1.0', tk.END)
-        for pid, name in process_list:
-            self.console4_text.insert(tk.END, f"{pid}\t{name}\n")
+    def load_dataset(self):
+        # Placeholder function to load dataset for AI model training
+        self.log_event("Loading dataset for AI model training...")
 
-    def update_system_metrics(self, cpu_percent, memory_percent, memory_total, memory_used, memory_free, disk_stats, bytes_sent, bytes_received):
-        # Update system metrics in GUI
-        self.console5_text.delete('1.0', tk.END)
-        self.console5_text.insert(tk.END, f"CPU Usage: {cpu_percent}%\n")
-        self.console5_text.insert(tk.END, f"Memory Usage: {memory_percent}%\n")
-        self.console5_text.insert(tk.END, f"Total Memory: {memory_total} bytes\n")
-        self.console5_text.insert(tk.END, f"Used Memory: {memory_used} bytes\n")
-        self.console5_text.insert(tk.END, f"Free Memory: {memory_free} bytes\n\n")
-        self.console5_text.insert(tk.END, "Disk Usage:\n")
-        for device, stats in disk_stats.items():
-            self.console5_text.insert(tk.END, f"Device: {device}\n")
-            if "error" in stats:
-                self.console5_text.insert(tk.END, f"Error: {stats['error']}\n")
-            else:
-                self.console5_text.insert(tk.END, f"Total: {stats['total']} bytes\n")
-                self.console5_text.insert(tk.END, f"Used: {stats['used']} bytes\n")
-                self.console5_text.insert(tk.END, f"Free: {stats['free']} bytes\n")
-                self.console5_text.insert(tk.END, f"Usage: {stats['percent']}%\n\n")
-        self.console5_text.insert(tk.END, f"Network Traffic:\nBytes Sent: {bytes_sent}\nBytes Received: {bytes_received}\n")
+        # Placeholder code to load dataset
+        X = np.random.rand(100, 10)
+        y = np.random.randint(2, size=(100,))
 
-    def log_event(self, event):
-        # Log events to console and log file
-        self.logger.info(event)
-        self.console3_text.insert(tk.END, event + "\n")
+        self.log_event("Dataset loaded successfully.")
+
+        return X, y
 
 if __name__ == "__main__":
-    CounterBalance()
+    app = CounterBalance()
