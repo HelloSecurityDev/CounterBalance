@@ -121,6 +121,68 @@ The Version 4 update that has been pushed provides the following additions, upda
 
 *There is currently no .exe executable download for V4 as of yet. I am working on producing it as quick as possible but as of now, downloading CounterBalance.exe from dropbox will only provide v1 not v4.*
 
+## V4 Training Results
+
+## Epoch 1/10
+- Training accuracy: 53.44%
+- Training loss: 0.7178
+- Validation accuracy: 60.00%
+- Validation loss: 0.6667
+
+## Epoch 2/10
+- Training accuracy: 45.08%
+- Training loss: 0.7019
+- Validation accuracy: 60.00%
+- Validation loss: 0.6624
+
+## Epoch 3/10
+- Training accuracy: 59.61%
+- Training loss: 0.6645
+- Validation accuracy: 60.00%
+- Validation loss: 0.6608
+
+## Epoch 4/10
+- Training accuracy: 55.39%
+- Training loss: 0.7058
+- Validation accuracy: 60.00%
+- Validation loss: 0.6602
+
+## Epoch 5/10
+- Training accuracy: 51.02%
+- Training loss: 0.7184
+- Validation accuracy: 65.00%
+- Validation loss: 0.6606
+
+## Epoch 6/10
+- Training accuracy: 48.67%
+- Training loss: 0.6862
+- Validation accuracy: 60.00%
+- Validation loss: 0.6609
+
+## Epoch 7/10
+- Training accuracy: 46.95%
+- Training loss: 0.7151
+- Validation accuracy: 60.00%
+- Validation loss: 0.6619
+
+## Epoch 8/10
+- Training accuracy: 51.33%
+- Training loss: 0.7173
+- Validation accuracy: 55.00%
+- Validation loss: 0.6630
+
+## Epoch 9/10
+- Training accuracy: 59.06%
+- Training loss: 0.6902
+- Validation accuracy: 60.00%
+- Validation loss: 0.6629
+
+## Epoch 10/10
+- Training accuracy: 55.23%
+- Training loss: 0.6836
+- Validation accuracy: 60.00%
+- Validation loss: 0.6631
+
 ## Contributing
 
 Contributions are welcome! Please fork the repository, make changes, and submit a pull request.
