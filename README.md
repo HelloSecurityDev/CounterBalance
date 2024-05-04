@@ -10,12 +10,33 @@ CounterBalance - It's time to tip the digital scales.
 
 ## Features
 
-- **Real-time Intrusion Detection**: CounterBalance continuously monitors network traffic using deep packet inspection and anomaly detection techniques.
-- **Automated Response Actions**: Upon detecting threats, CounterBalance triggers automated response actions such as blocking malicious IP addresses, mitigating DDoS attacks, quarantining malware, and preventing execution of suspicious files.
-- **Live Output Console**: Provides a live output console for monitoring system events and alerts in real-time.
-- **System Status Monitoring**: Displays real-time system metrics including CPU and memory usage.
-- **Log Management**: Logs events to a file for historical analysis and auditing purposes.
-- **User-friendly GUI**: Features a user-friendly graphical interface for easy interaction and control.
+ **Real-time Intrusion Detection:**
+   - Utilizes deep packet inspection to analyze network traffic and detect anomalies.
+   
+ **Automated Response Actions:**
+   - Automatically triggers response actions like blocking IP addresses and quarantining malware based on detected threats.
+   
+ **AI Model Integration:**
+   - Incorporates machine learning models for malware detection and classification.
+   
+ **Graphical User Interface (GUI):**
+   - Provides a user-friendly interface for monitoring system metrics, running processes, and viewing logs.
+   - GUI divided into panels for live network traffic, IDS & EDR information, event logs, running processes, and system metrics.
+   - Buttons for starting/stopping IDS & EDR, scanning files, monitoring processes, and ending processes.
+
+ **Logging and Event Management:**
+   - Enhanced logging with log file rotation, improved log formatting, and customizable log levels.
+   - Logs events to the console and log file, providing detailed information about system activities.
+
+ **Threat Intelligence Integration:**
+   - Fetches threat intelligence information from external APIs to enhance threat detection capabilities.
+   
+ **Performance Optimization:**
+   - Utilizes multithreading for CPU and memory monitoring to ensure minimal performance overhead.
+   - Batch processing for AI model training to optimize training time and resource utilization.
+
+ **Dependency Management:**
+   - Includes a `requirements.txt` file listing all required Python packages for easy installation using `pip`.
 
 ## Usage
 
@@ -46,45 +67,59 @@ Python 3.6+
 Required Python packages are listed below.
 
 ```bash
-- tkinter: Pythons de facto standard GUI (Graphical User Interface) package.
-- scapy: For packet manipulation and sniffing.
-- requests: For making HTTP requests to fetch threat intelligence.
-- psutil: For retrieving system and process information.
-- win32evtlog: Windows Event Log API for retrieving security alerts.
-- pywintypes: Python for Windows extensions.
+  - `tkinter`
+  - `scapy`
+  - `requests`
+  - `psutil`
+  - `numpy`
+  - `pandas`
+  - `scikit-learn`
+  - `tensorflow`
 ```
    
-## V3 UPDATE
+## V4 UPDATE
 
-The Version 3 update that has been pushed provides the following additions, updates, and changes to the CounterBalance program.
+The Version 4 update that has been pushed provides the following additions, updates, and changes to the CounterBalance program.
 
-*GUI Improvements:*
-- Utilized tkinter's Label, Text, and Button widgets for the GUI.
-- Defined the GUI layout using pack geometry manager.
-- Added labels for the title, tagline, console, and author.
-- Adjusted the window size to 800x600 pixels.
-- Added 5 live output console windows.
-- incorporated live system metrics output.
-- incorporated live windows security event logs output.
-- incorporated live running task monitoring and querying.
-- Incorporated live network traffic monitoring output.
-- incorporated the ability to end chosen tasks.
+## Changes
 
-*Intrusion Detection and Endpoint Defense (IDS & EDR):*
-- Integrated threading for handling concurrency in starting and stopping IDS & EDR.
-- Incorporated packet sniffing using Scapy for intrusion detection.
-- Implemented Deep Packet Inspection (DPI) callback function for analyzing network packets.
-- Added functions for blocking IP addresses, mitigating DDoS attacks, quarantining malware, and preventing execution of suspicious files.
-- Fetched threat intelligence information from an external API for detected IP addresses.
-- Integrated Windows Firewall commands for IP address blocking and other security measures.
-- Ensured logging of events to both the console and a log file for tracking system activity.
+1. **GUI Enhancements:**
+   - **Old Version:** Basic GUI layout with limited functionality.
+   - **New Version:** Improved GUI design with multiple panels for live network traffic, IDS & EDR information, event logs, running processes, and system metrics. Buttons for starting/stopping IDS & EDR, scanning files, monitoring processes, and ending processes have been added.
 
-*Additional Features:*
-- Included functionality for training an Isolation Forest model using the KDD Cup dataset.
-- Added buttons for starting IDS & EDR and opening the logs directory.
-- Provided methods for fetching threat intelligence and opening the logs directory in a web browser.
+2. **Logging Improvements:**
+   - **Old Version:** Basic logging setup with minimal configuration.
+   - **New Version:** Enhanced logging with log file rotation, improved log formatting, and customizable log levels.
 
-*There is currently no .exe executable download for V3 as of yet. I am working on producing it as quick as possible but as of now, downloading CounterBalance.exe from dropbox will only provide v1 not v2.*
+3. **Functionality Additions:**
+   - **Old Version:** Limited functionality for packet sniffing and response actions.
+   - **New Version:** Added functionality for malware detection using AI models, automated response actions such as IP blocking and malware quarantine, and preventing execution of malicious files.
+
+4. **Dependency Management:**
+   - **Old Version:** No explicit requirement specification.
+   - **New Version:** Included a `requirements.txt` file listing all required Python packages for easy installation using `pip`.
+
+5. **Documentation:**
+   - **Old Version:** No documentation provided.
+   - **New Version:** Added a comprehensive README.md file explaining the project, its features, prerequisites, usage instructions, configuration options, license, and acknowledgments.
+
+6. **Code Refactoring:**
+   - **Old Version:** Code structure lacking modularity and clarity.
+   - **New Version:** Refactored code into classes and methods for better organization and readability. Improved variable names, added comments, and structured code blocks logically.
+
+7. **API Integration:**
+   - **Old Version:** No integration with external APIs for threat intelligence.
+   - **New Version:** Integrated with external threat intelligence API to fetch information about detected threats.
+
+8. **Error Handling:**
+   - **Old Version:** Limited error handling, with potential for crashes.
+   - **New Version:** Implemented robust error handling mechanisms to gracefully handle exceptions and prevent crashes.
+
+9. **Performance Optimization:**
+   - **Old Version:** No optimization measures implemented.
+   - **New Version:** Introduced performance optimizations such as multithreading for CPU and memory monitoring, and batch processing for AI model training.
+
+*There is currently no .exe executable download for V4 as of yet. I am working on producing it as quick as possible but as of now, downloading CounterBalance.exe from dropbox will only provide v1 not v4.*
 
 ## Contributing
 
