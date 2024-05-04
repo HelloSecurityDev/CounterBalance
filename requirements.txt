@@ -1,5 +1,7 @@
-tkinter
 scapy
 requests
 psutil
-pywin32
+numpy
+pandas
+scikit-learn
+tensorflow
